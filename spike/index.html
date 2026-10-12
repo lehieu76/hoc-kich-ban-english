@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thử nút tai nghe</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151413; --panel: #201f1d; --ink: #eeeae4; --muted: #a39d93; --accent: #5b9dff; --line: #37342f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  h2 { font-size: 17px; margin: 0 0 8px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  button, select, input[type=number] { font: inherit; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  .big { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px; }
+  .big button { padding: 18px 0; font-size: 19px; }
+  #now { font-size: 28px; font-weight: 700; text-align: center; margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 15px; }
+  ol { padding-left: 20px; margin: 0; }
+  li { margin-bottom: 6px; }
+  #log { white-space: pre-wrap; font: 13px/1.45 ui-monospace, monospace; max-height: 50vh; overflow: auto; margin: 8px 0 0; }
+  input[type=file] { max-width: 100%; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Thử nút tai nghe &amp; Bluetooth xe</h1>
+
+  <section>
+    <h2>1. Dựng bài nghe</h2>
+    <div class="row"><button id="build-synthetic" class="primary">Bài bíp giả lập (10 câu)</button></div>
+    <p class="muted">Câu N = N tiếng bíp, nghỉ 3 giây. Dùng để thử nút mà không cần file.</p>
+    <div class="row"><input id="mp3-file" type="file" accept="audio/*"></div>
+    <div class="row">
+      <label>Nghỉ tối thiểu giữa câu <input id="min-pause" type="number" value="0.8" step="0.1" min="0.2" style="width:5em"> giây</label>
+    </div>
+    <div class="row">
+      <select id="mode">
+        <option value="repeat">Nghe – nhắc lại</option>
+        <option value="plain">Nguyên bản (chỉ chia câu)</option>
+      </select>
+      <button id="build-mp3">Dựng từ MP3</button>
+    </div>
+  </section>
+
+  <section id="player" hidden>
+    <h2>2. Phát</h2>
+    <p id="track-info" class="muted"></p>
+    <div id="now">–</div>
+    <div class="big">
+      <button id="prev">⏮ Câu trước</button>
+      <button id="play" class="primary">Phát</button>
+      <button id="next">Câu sau ⏭</button>
+    </div>
+    <div class="row">
+      <label>Tốc độ
+        <select id="speed">
+          <option value="0.8">0,8×</option>
+          <option value="0.9">0,9×</option>
+          <option value="1" selected>1,0×</option>
+          <option value="1.1">1,1×</option>
+        </select>
+      </label>
+      <label><input id="loop" type="checkbox" checked> Lặp lại cả bài</label>
+    </div>
+    <audio id="audio" preload="auto"></audio>
+  </section>
+
+  <section>
+    <h2>3. Các bước kiểm tra</h2>
+    <ol>
+      <li>Kết nối tai nghe Bluetooth (hoặc loa xe), bấm <b>Phát</b> trên màn hình.</li>
+      <li>Khóa màn hình. Bấm nút tai nghe: <b>1 lần</b> (dừng/phát), <b>2 lần</b> (câu sau), <b>3 lần</b> (câu trước). Đếm tiếng bíp để biết đang ở câu mấy.</li>
+      <li>Trên xe: thử nút ⏭ ⏮ ở vô lăng/màn hình xe.</li>
+      <li>Để khóa màn hình phát liên tục 10 phút.</li>
+      <li>Mở khóa, xem nhật ký bên dưới. Bấm <b>Chép nhật ký</b> rồi gửi cho em.</li>
+      <li>Nghe thử tốc độ 0,8× với file MP3 xem giọng có tự nhiên không.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>4. Nhật ký</h2>
+    <div class="row"><button id="copy-log">Chép nhật ký</button><button id="clear-log">Xóa</button></div>
+    <pre id="log"></pre>
+  </section>
+</main>
+<script type="module" src="spike-player.js"></script>
+</body>
+</html>
