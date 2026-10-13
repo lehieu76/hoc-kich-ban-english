@@ -32,3 +32,5 @@ Dừng lại báo Sếp. Phương án B: app chỉ dùng để dựng và xuất
 - Đo file Fleming hiện tại: nghỉ giữa các câu chỉ 0,4–1,1 giây, chồng lấn với chỗ ngắt hơi trong câu (dài nhất 0,42 giây so với ranh giới câu ngắn nhất 0,44 giây). Cắt tự động theo số câu bị lệch từ khoảng câu 19. → Cần tạo lại file theo quy ước ≥ 1 giây giữa câu, ≥ 2 giây giữa đoạn.
 - Trang thử nghiệm `spike/` chạy đúng trên Chromium headless: dựng bài bíp giả lập, chuyển câu, đổi tốc độ 0,8× giữ cao độ, dựng "Nghe – nhắc lại" từ MP3 (bài Fleming → file WAV 480 giây, 21 MB).
 - Chờ kiểm tra trên điện thoại thật: nút tai nghe, nút xe, phát khi khóa màn hình.
+- Thử trên điện thoại thật (13/10 tối): bấm 3 lần không lùi câu; bấm 2 lần lúc sang câu, lúc chỉ dừng/phát → không tin cậy cho trẻ. Nút Volume +/− của tai nghe: web không bắt được (hệ điều hành giữ).
+- Đã thêm cách điều khiển chỉ cần bấm 1 lần: dừng rồi phát lại = nghe lại câu đang dở; dừng trong 1,5 giây đầu câu = lùi câu trước. Chờ Sếp thử lại.
