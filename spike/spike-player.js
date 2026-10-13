@@ -83,6 +83,13 @@ function previousSentence(reason) {
   seekTo(intoSentence > 1.5 ? index : index - 1, reason);
 }
 
+// Phát tiếp sau khi dừng: nếu bật "phát lại = nghe lại câu" thì quay về đầu câu đang dở
+// (dừng ngay đầu câu < 1,5s thì lùi về câu trước) → chỉ cần nút bấm 1 lần là tiến/lùi được.
+function resume(reason) {
+  if ($('replay-on-resume').checked && audio.currentTime > 0) previousSentence(`${reason} (nghe lại)`);
+  else { log(reason); audio.play(); }
+}
+
 function updateNowPlaying() {
   const index = indexAt(audio.currentTime);
   if (index === currentIndex) return;
@@ -102,7 +109,7 @@ function setupMediaSession() {
     return;
   }
   const handlers = {
-    play: () => { log('NÚT: play'); audio.play(); },
+    play: () => resume('NÚT: play'),
     pause: () => { log('NÚT: pause'); audio.pause(); },
     stop: () => { log('NÚT: stop'); audio.pause(); },
     nexttrack: () => nextSentence('NÚT: nexttrack'),
@@ -160,7 +167,7 @@ $('build-mp3').addEventListener('click', async () => {
     $('build-mp3').disabled = false;
   }
 });
-$('play').addEventListener('click', () => (audio.paused ? audio.play() : audio.pause()));
+$('play').addEventListener('click', () => (audio.paused ? resume('Màn hình: phát') : audio.pause()));
 $('prev').addEventListener('click', () => previousSentence('Màn hình: câu trước'));
 $('next').addEventListener('click', () => nextSentence('Màn hình: câu sau'));
 $('speed').addEventListener('change', () => { applySpeed(); log(`Tốc độ ${audio.playbackRate}×`); });
