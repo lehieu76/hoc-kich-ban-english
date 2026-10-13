@@ -2,6 +2,7 @@
 import { buildTrack, beeps, silence, TRACK_SAMPLE_RATE } from './wav-track-builder.js';
 import { findPauses } from './silence-segmenter.js';
 import { log, clearLog, watchLog, logText } from './event-log.js';
+import { listenRemoteKeys, setupScreenWakeLock } from './remote-key-listener.js';
 
 const $ = (id) => document.getElementById(id);
 const audio = $('audio');
@@ -181,6 +182,11 @@ $('copy-log').addEventListener('click', async () => {
 $('clear-log').addEventListener('click', clearLog);
 watchLog((entries) => { $('log').textContent = entries.join('\n') || '(chưa có sự kiện)'; });
 
+listenRemoteKeys({
+  onSinglePress: () => track && previousSentence('REMOTE: bấm 1 lần (nghe lại)'),
+  onDoublePress: () => track && nextSentence('REMOTE: bấm 2 lần'),
+});
+setupScreenWakeLock($('wake-lock'));
 audio.loop = $('loop').checked;
 setupMediaSession();
 log(`Mở trang · ${navigator.userAgent.match(/Android [\d.]+|iPhone OS [\d_]+|Windows NT [\d.]+/)?.[0] || 'thiết bị lạ'}`);
