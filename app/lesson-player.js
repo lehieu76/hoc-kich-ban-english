@@ -15,6 +15,13 @@ let lesson = null;
 let audioUrl = null;
 let currentIndex = -1;
 let speed = Number(localStorage.getItem(SPEED_KEY)) || 0.8;
+let repeating = false;
+
+const TEXT_SIZE_KEY = 'text-size';
+const TEXT_SIZE_STEP = 4;
+const MIN_TEXT_SIZE = 20;
+const MAX_TEXT_SIZE = 60;
+let textSize = Number(localStorage.getItem(TEXT_SIZE_KEY)) || 32;
 
 // ---------- Nạp bài (bài có sẵn trong app/lessons) ----------
 
@@ -68,6 +75,7 @@ function updateCurrentParagraph() {
   const paragraph = lesson.paragraphs[index];
   $('counter').textContent = `Đoạn ${index + 1}/${lesson.paragraphs.length}`;
   $('text').textContent = paragraph.text;
+  updateRepeatButton();
   [...$('paragraph-list').children].forEach((li, i) => li.classList.toggle('active', i === index));
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -102,7 +110,7 @@ function togglePlay() {
 
 // Lặp đoạn: khi chạm đầu đoạn kế tiếp (hoặc hết bài) thì quay về đầu đoạn đang học.
 function handleRepeat() {
-  if (!$('repeat').checked || currentIndex < 0) return;
+  if (!repeating || currentIndex < 0) return;
   const next = lesson.paragraphs[currentIndex + 1];
   if (next && audio.currentTime >= next.time - 0.05) audio.currentTime = lesson.paragraphs[currentIndex].time;
 }
@@ -115,6 +123,28 @@ function applySpeed() {
   $('speed-value').textContent = `${speed.toFixed(2).replace('.', ',')}×`;
   $('slower').disabled = speed <= MIN_SPEED + 0.001;
   $('faster').disabled = speed >= MAX_SPEED - 0.001;
+}
+
+// Nút lặp: tắt = xám, bật = cam kèm số đoạn đang lặp.
+function updateRepeatButton() {
+  const button = $('repeat');
+  button.setAttribute('aria-pressed', String(repeating));
+  button.textContent = repeating
+    ? `🔁 ĐANG LẶP ĐOẠN ${currentIndex + 1}`
+    : '🔁 Lặp lại đoạn này: TẮT';
+}
+
+// Cỡ chữ đoạn đang đọc: lưu lại cho tới khi người dùng chỉnh tiếp.
+function applyTextSize() {
+  document.documentElement.style.setProperty('--text-size', `${textSize}px`);
+  $('text-smaller').disabled = textSize <= MIN_TEXT_SIZE;
+  $('text-larger').disabled = textSize >= MAX_TEXT_SIZE;
+}
+
+function changeTextSize(delta) {
+  textSize = Math.min(MAX_TEXT_SIZE, Math.max(MIN_TEXT_SIZE, textSize + delta));
+  localStorage.setItem(TEXT_SIZE_KEY, String(textSize));
+  applyTextSize();
 }
 
 function changeSpeed(delta) {
@@ -151,7 +181,7 @@ audio.addEventListener('timeupdate', () => {
   }
 });
 audio.addEventListener('ended', () => {
-  if ($('repeat').checked && currentIndex >= 0) goTo(currentIndex);
+  if (repeating && currentIndex >= 0) goTo(currentIndex);
 });
 audio.addEventListener('play', () => { $('play').textContent = '⏸ Dừng'; });
 audio.addEventListener('pause', () => { $('play').textContent = '▶ Phát'; });
@@ -161,9 +191,13 @@ $('prev').addEventListener('click', previousParagraph);
 $('next').addEventListener('click', nextParagraph);
 $('slower').addEventListener('click', () => changeSpeed(-SPEED_STEP));
 $('faster').addEventListener('click', () => changeSpeed(SPEED_STEP));
+$('text-smaller').addEventListener('click', () => changeTextSize(-TEXT_SIZE_STEP));
+$('text-larger').addEventListener('click', () => changeTextSize(TEXT_SIZE_STEP));
+$('repeat').addEventListener('click', () => { repeating = !repeating; updateRepeatButton(); });
 $('lesson-select').addEventListener('change', (event) => { audio.pause(); openLesson(event.target.value); });
 
 applySpeed();
+applyTextSize();
 setupMediaSession();
 loadLessonList().catch((error) => { $('text').textContent = `Không tải được bài: ${error.message}`; $('player').hidden = false; });
 

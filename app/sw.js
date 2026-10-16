@@ -1,5 +1,5 @@
 // Lưu sẵn giao diện app để mở được khi không có mạng (trên xe). File MP3 nằm trong IndexedDB, không qua đây.
-const CACHE = 'hoc-kich-ban-v3';
+const CACHE = 'hoc-kich-ban-v4';
 const FILES = ['./', './index.html', './lesson-player.js', './timestamp-script-parser.js', './silence-segmenter.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {

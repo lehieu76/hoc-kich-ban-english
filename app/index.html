@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#1f6feb">
 <style>
-  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; --active: #e6efff; }
+  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; --active: #e6efff; --repeat: #e8590c; --text-size: 32px; }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #121211; --panel: #1d1c1a; --ink: #f1ede6; --muted: #a39d93; --accent: #4f8dff; --line: #34312c; --active: #1c2b45; }
   }
@@ -19,11 +19,11 @@
   header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   #title { font-size: 15px; color: var(--muted); margin: 0; }
   #counter { font-size: 20px; font-weight: 700; white-space: nowrap; }
-  #text { flex: 1; font-size: clamp(26px, 6.5vw, 40px); line-height: 1.45; font-weight: 600; margin: 0; overflow-wrap: break-word; }
+  #text { flex: 1; font-size: var(--text-size); line-height: 1.45; font-weight: 600; margin: 0; overflow-wrap: break-word; }
   .controls { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 10px; position: sticky; bottom: 0; background: var(--bg); padding: 8px 0; }
   .controls button { font: inherit; font-size: 20px; font-weight: 700; padding: 22px 4px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
   .controls #play { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .options { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 17px; }
+  .options { display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; font-size: 19px; }
   select, button.small { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
   details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
   summary { cursor: pointer; font-weight: 600; }
@@ -31,6 +31,8 @@
   #paragraph-list li { padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 16px; }
   #paragraph-list li.active { background: var(--active); font-weight: 600; }
   .speed { display: flex; align-items: center; gap: 10px; }
+  #repeat { width: 100%; font: inherit; font-size: 20px; font-weight: 700; padding: 16px 12px; border-radius: 16px; border: 2px solid var(--line); background: var(--panel); color: var(--muted); }
+  #repeat[aria-pressed="true"] { background: var(--repeat); border-color: var(--repeat); color: #fff; }
   .speed button { min-width: 48px; font-size: 22px; font-weight: 700; padding: 4px 0; }
   .speed button:disabled { opacity: .4; }
   #speed-value { min-width: 4.2em; text-align: center; font-size: 20px; }
@@ -52,8 +54,12 @@
         <b id="speed-value">0,80×</b>
         <button id="faster" class="small" aria-label="Nhanh hơn">+</button>
       </div>
-      <label><input id="repeat" type="checkbox"> Lặp lại đoạn này</label>
+      <div class="speed">Cỡ chữ
+        <button id="text-smaller" class="small" aria-label="Chữ nhỏ hơn">A−</button>
+        <button id="text-larger" class="small" aria-label="Chữ to hơn">A+</button>
+      </div>
     </div>
+    <button id="repeat" aria-pressed="false">🔁 Lặp lại đoạn này: TẮT</button>
     <div class="controls">
       <button id="prev">⏮ Lùi</button>
       <button id="play">▶ Phát</button>
