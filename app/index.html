@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Học thuộc kịch bản</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1f6feb">
+<style>
+  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; --active: #e6efff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121211; --panel: #1d1c1a; --ink: #f1ede6; --muted: #a39d93; --accent: #4f8dff; --line: #34312c; --active: #1c2b45; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 18px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; min-height: 100%; gap: 14px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  #title { font-size: 15px; color: var(--muted); margin: 0; }
+  #counter { font-size: 20px; font-weight: 700; white-space: nowrap; }
+  #text { flex: 1; font-size: clamp(26px, 6.5vw, 40px); line-height: 1.45; font-weight: 600; margin: 0; overflow-wrap: break-word; }
+  .controls { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 10px; position: sticky; bottom: 0; background: var(--bg); padding: 8px 0; }
+  .controls button { font: inherit; font-size: 20px; font-weight: 700; padding: 22px 4px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .controls #play { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .options { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 17px; }
+  select, button.small { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  summary { cursor: pointer; font-weight: 600; }
+  ol { padding-left: 24px; margin: 8px 0 0; }
+  #paragraph-list li { padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+  #paragraph-list li.active { background: var(--active); font-weight: 600; }
+  label.file { display: block; margin: 10px 0; }
+  input[type=file] { display: block; margin-top: 4px; max-width: 100%; }
+  #status { color: var(--muted); font-size: 15px; }
+  #player:not([hidden]) { display: contents; }
+  .hint { color: var(--muted); font-size: 15px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <section id="player" hidden>
+    <header>
+      <p id="title"></p>
+      <span id="counter"></span>
+    </header>
+    <p id="text"></p>
+    <div class="options">
+      <label>Tốc độ
+        <select id="speed">
+          <option value="0.7">0,7×</option>
+          <option value="0.8">0,8×</option>
+          <option value="0.9">0,9×</option>
+          <option value="1">1,0×</option>
+          <option value="1.1">1,1×</option>
+        </select>
+      </label>
+      <label><input id="repeat" type="checkbox"> Lặp lại đoạn này</label>
+    </div>
+    <div class="controls">
+      <button id="prev">⏮ Lùi</button>
+      <button id="play">▶ Phát</button>
+      <button id="next">Tiến ⏭</button>
+    </div>
+    <details>
+      <summary>Danh sách đoạn (chạm để nhảy tới)</summary>
+      <ol id="paragraph-list"></ol>
+    </details>
+  </section>
+
+  <details id="setup">
+    <summary>Nạp bài mới</summary>
+    <p class="hint">Chọn file MP3 và file kịch bản .txt có mốc thời gian đầu mỗi đoạn (ví dụ: <code>00:16 He was a Scottish…</code>). Bài được lưu ngay trên máy này, lần sau mở là có, không cần mạng.</p>
+    <label class="file">File MP3<input id="mp3-file" type="file" accept="audio/*,.mp3"></label>
+    <label class="file">File kịch bản .txt<input id="script-file" type="file" accept=".txt,text/plain"></label>
+    <button id="import" class="small">Nạp bài</button>
+    <p id="status"></p>
+  </details>
+  <audio id="audio" preload="auto"></audio>
+</main>
+<script type="module" src="lesson-player.js"></script>
+</body>
+</html>

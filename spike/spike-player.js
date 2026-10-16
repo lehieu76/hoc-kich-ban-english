@@ -1,6 +1,6 @@
 // Trang thử nghiệm: phát 1 file WAV dựng sẵn, nhận nút tai nghe / Bluetooth xe qua Media Session, ghi nhật ký.
 import { buildTrack, beeps, silence, TRACK_SAMPLE_RATE } from './wav-track-builder.js';
-import { findPauses } from './silence-segmenter.js';
+import { findPauses } from '../app/silence-segmenter.js';
 import { log, clearLog, watchLog, logText } from './event-log.js';
 import { listenRemoteKeys, setupScreenWakeLock } from './remote-key-listener.js';
 
