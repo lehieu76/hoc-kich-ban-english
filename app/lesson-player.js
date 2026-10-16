@@ -1,59 +1,45 @@
 // Trình phát học theo đoạn: chữ to + Phát/Dừng + Đoạn trước/sau.
 // Điều khiển được từ màn hình khóa / tai nghe / Bluetooth xe qua Media Session.
-import { parseTimestampScript, snapParagraphsToPauses } from './timestamp-script-parser.js';
-import { findPauses } from './silence-segmenter.js';
-import { saveLesson, loadLesson } from './lesson-storage.js';
 
 const $ = (id) => document.getElementById(id);
 const audio = $('audio');
-const POSITION_KEY = 'lesson-position';
+const LESSON_KEY = 'lesson-id';
 const SPEED_KEY = 'lesson-speed';
+const positionKey = (id) => `lesson-position:${id}`;
 const RESTART_THRESHOLD_SECONDS = 2;
+const SPEED_STEP = 0.05;
+const MIN_SPEED = 0.5;
+const MAX_SPEED = 1.5;
 
 let lesson = null;
-let currentIndex = -1;
 let audioUrl = null;
+let currentIndex = -1;
+let speed = Number(localStorage.getItem(SPEED_KEY)) || 0.8;
 
-// ---------- Nạp bài ----------
+// ---------- Nạp bài (bài có sẵn trong app/lessons) ----------
 
-async function decodePauses(file) {
-  const context = new AudioContext();
-  try {
-    const decoded = await context.decodeAudioData(await file.arrayBuffer());
-    return findPauses(decoded.getChannelData(0), decoded.sampleRate);
-  } finally {
-    context.close();
-  }
+async function loadLessonList() {
+  const lessons = await (await fetch('lessons/index.json')).json();
+  const select = $('lesson-select');
+  select.replaceChildren(...lessons.map((l) => new Option(l.title, l.id)));
+  select.hidden = lessons.length < 2;
+  const savedId = localStorage.getItem(LESSON_KEY);
+  select.value = lessons.some((l) => l.id === savedId) ? savedId : lessons[0].id;
+  await openLesson(select.value);
 }
 
-async function importLesson() {
-  const mp3 = $('mp3-file').files[0];
-  const script = $('script-file').files[0];
-  if (!mp3 || !script) { setStatus('Cần chọn đủ file MP3 và file kịch bản .txt'); return; }
-  setStatus('Đang đọc file…');
-  const { title, paragraphs } = parseTimestampScript(await script.text());
-  if (!paragraphs.length) { setStatus('Không thấy dòng nào có mốc thời gian dạng 00:16 trong file kịch bản'); return; }
-  const snapped = snapParagraphsToPauses(paragraphs, await decodePauses(mp3));
-  const newLesson = { title, paragraphs: snapped, audio: mp3, savedAt: Date.now() };
-  await saveLesson(newLesson);
-  localStorage.setItem(POSITION_KEY, '0');
-  showLesson(newLesson);
-  setStatus(`Đã nạp ${snapped.length} đoạn`);
-}
-
-function setStatus(message) {
-  $('status').textContent = message;
-}
-
-// ---------- Hiển thị ----------
-
-function showLesson(newLesson) {
-  lesson = newLesson;
+async function openLesson(id) {
+  const data = await (await fetch(`lessons/${id}/lesson.json`)).json();
+  lesson = { id, ...data };
+  localStorage.setItem(LESSON_KEY, id);
+  // Tải trọn file rồi phát từ bộ nhớ: tua/nhảy đoạn luôn chạy, kể cả khi offline (service worker trả bản đã lưu).
+  $('text').textContent = 'Đang tải bài…';
+  const blob = await (await fetch(`lessons/${id}/${data.audio}`)).blob();
   if (audioUrl) URL.revokeObjectURL(audioUrl);
-  audioUrl = URL.createObjectURL(lesson.audio);
+  audioUrl = URL.createObjectURL(blob);
   audio.src = audioUrl;
   audio.addEventListener('loadedmetadata', () => {
-    audio.currentTime = Number(localStorage.getItem(POSITION_KEY) || 0);
+    audio.currentTime = Number(localStorage.getItem(positionKey(id)) || 0);
     applySpeed();
   }, { once: true });
   $('title').textContent = lesson.title;
@@ -65,7 +51,6 @@ function showLesson(newLesson) {
   }));
   currentIndex = -1;
   updateCurrentParagraph();
-  $('setup').open = false;
   $('player').hidden = false;
 }
 
@@ -122,11 +107,20 @@ function handleRepeat() {
   if (next && audio.currentTime >= next.time - 0.05) audio.currentTime = lesson.paragraphs[currentIndex].time;
 }
 
+// Tốc độ nói: giữ nguyên cao độ giọng, lưu lại cho tới khi người dùng chỉnh tiếp.
 function applySpeed() {
-  const rate = Number($('speed').value);
   audio.preservesPitch = true;
-  audio.defaultPlaybackRate = rate;
-  audio.playbackRate = rate;
+  audio.defaultPlaybackRate = speed;
+  audio.playbackRate = speed;
+  $('speed-value').textContent = `${speed.toFixed(2).replace('.', ',')}×`;
+  $('slower').disabled = speed <= MIN_SPEED + 0.001;
+  $('faster').disabled = speed >= MAX_SPEED - 0.001;
+}
+
+function changeSpeed(delta) {
+  speed = Math.round(Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed + delta)) * 100) / 100;
+  localStorage.setItem(SPEED_KEY, String(speed));
+  applySpeed();
 }
 
 // ---------- Media Session: màn hình khóa, tai nghe, xe ----------
@@ -151,7 +145,7 @@ audio.addEventListener('timeupdate', () => {
   if (!lesson) return;
   handleRepeat();
   updateCurrentParagraph();
-  localStorage.setItem(POSITION_KEY, String(audio.currentTime));
+  localStorage.setItem(positionKey(lesson.id), String(audio.currentTime));
   if ('mediaSession' in navigator && audio.duration) {
     try { navigator.mediaSession.setPositionState({ duration: audio.duration, position: audio.currentTime, playbackRate: audio.playbackRate }); } catch {}
   }
@@ -165,13 +159,12 @@ audio.addEventListener('pause', () => { $('play').textContent = '▶ Phát'; });
 $('play').addEventListener('click', togglePlay);
 $('prev').addEventListener('click', previousParagraph);
 $('next').addEventListener('click', nextParagraph);
-$('import').addEventListener('click', () => importLesson().catch((error) => setStatus(`Lỗi: ${error.message}`)));
-$('speed').addEventListener('change', () => { applySpeed(); localStorage.setItem(SPEED_KEY, $('speed').value); });
+$('slower').addEventListener('click', () => changeSpeed(-SPEED_STEP));
+$('faster').addEventListener('click', () => changeSpeed(SPEED_STEP));
+$('lesson-select').addEventListener('change', (event) => { audio.pause(); openLesson(event.target.value); });
 
-$('speed').value = localStorage.getItem(SPEED_KEY) || '0.8';
+applySpeed();
 setupMediaSession();
-loadLesson()
-  .then((saved) => { if (saved) showLesson(saved); else $('setup').open = true; })
-  .catch(() => { $('setup').open = true; });
+loadLessonList().catch((error) => { $('text').textContent = `Không tải được bài: ${error.message}`; $('player').hidden = false; });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});

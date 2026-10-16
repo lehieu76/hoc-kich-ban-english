@@ -1,0 +1,11 @@
+{
+  "name": "hoc-kich-ban-english",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-lesson": "node tools/build-lesson.mjs"
+  },
+  "devDependencies": {
+    "mpg123-decoder": "1.0.0"
+  }
+}

@@ -30,31 +30,28 @@
   ol { padding-left: 24px; margin: 8px 0 0; }
   #paragraph-list li { padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 16px; }
   #paragraph-list li.active { background: var(--active); font-weight: 600; }
-  label.file { display: block; margin: 10px 0; }
-  input[type=file] { display: block; margin-top: 4px; max-width: 100%; }
-  #status { color: var(--muted); font-size: 15px; }
+  .speed { display: flex; align-items: center; gap: 10px; }
+  .speed button { min-width: 48px; font-size: 22px; font-weight: 700; padding: 4px 0; }
+  .speed button:disabled { opacity: .4; }
+  #speed-value { min-width: 4.2em; text-align: center; font-size: 20px; }
   #player:not([hidden]) { display: contents; }
-  .hint { color: var(--muted); font-size: 15px; margin: 6px 0; }
 </style>
 </head>
 <body>
 <main>
   <section id="player" hidden>
+    <select id="lesson-select" hidden></select>
     <header>
       <p id="title"></p>
       <span id="counter"></span>
     </header>
     <p id="text"></p>
     <div class="options">
-      <label>Tốc độ
-        <select id="speed">
-          <option value="0.7">0,7×</option>
-          <option value="0.8">0,8×</option>
-          <option value="0.9">0,9×</option>
-          <option value="1">1,0×</option>
-          <option value="1.1">1,1×</option>
-        </select>
-      </label>
+      <div class="speed">Tốc độ
+        <button id="slower" class="small" aria-label="Chậm hơn">−</button>
+        <b id="speed-value">0,80×</b>
+        <button id="faster" class="small" aria-label="Nhanh hơn">+</button>
+      </div>
       <label><input id="repeat" type="checkbox"> Lặp lại đoạn này</label>
     </div>
     <div class="controls">
@@ -68,14 +65,6 @@
     </details>
   </section>
 
-  <details id="setup">
-    <summary>Nạp bài mới</summary>
-    <p class="hint">Chọn file MP3 và file kịch bản .txt có mốc thời gian đầu mỗi đoạn (ví dụ: <code>00:16 He was a Scottish…</code>). Bài được lưu ngay trên máy này, lần sau mở là có, không cần mạng.</p>
-    <label class="file">File MP3<input id="mp3-file" type="file" accept="audio/*,.mp3"></label>
-    <label class="file">File kịch bản .txt<input id="script-file" type="file" accept=".txt,text/plain"></label>
-    <button id="import" class="small">Nạp bài</button>
-    <p id="status"></p>
-  </details>
   <audio id="audio" preload="auto"></audio>
 </main>
 <script type="module" src="lesson-player.js"></script>
