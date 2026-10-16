@@ -1,7 +1,7 @@
 ---
 title: "PWA học thuộc kịch bản thuyết trình tiếng Anh bằng tai"
 description: "Web app cài trên Android giúp bé 8 tuổi luyện phát âm và học thuộc kịch bản trên xe, điều khiển hoàn toàn bằng nút tai nghe/Bluetooth, không cần nhìn màn hình."
-status: pending
+status: in-progress
 priority: P1
 effort: 39h
 branch: main
@@ -12,6 +12,13 @@ created: 2026-10-13
 ---
 
 # PWA học thuộc kịch bản bằng tai
+
+> **Trạng thái 16/10/2026 — đã chuyển hướng, bản đang dùng:** https://lehieu76.github.io/hoc-kich-ban-english/app/
+> - Thử thật trên điện thoại: bấm 2/3 lần trên tai nghe không tin cậy, Volume ± và remote chụp ảnh không dùng được → điều khiển bằng nút ⏮ ⏯ ⏭ trên màn hình khóa (không cần mở khóa) + 3 nút lớn trong app.
+> - Học **theo đoạn** bằng mốc thời gian Sếp tự ghi trong `script.txt` (dòng `mm:ss nội dung`), 1 file MP3, không cắt file, không dựng WAV.
+> - Đã có: chữ to + A−/A+, tốc độ −/+ (0,5–1,5×, nhớ lại), nút lặp đoạn lớn, danh sách đoạn, nhớ vị trí nghe, offline (service worker luôn revalidate).
+> - Bài nằm sẵn trong `app/lessons/<id>/` (audio.mp3 + script.txt → `npm run build-lesson -- app/lessons/<id>` sinh lesson.json + index.json). Sếp đồng ý công khai nội dung bài.
+> - Các phase bên dưới (dựng WAV, chế độ nhắc lại, Supabase…) tạm hoãn, chỉ làm khi Sếp yêu cầu.
 
 ## Mục tiêu
 Bé (8 tuổi, tự đọc được tiếng Anh) học thuộc và nói đúng phát âm bài thuyết trình ~3 phút trong hơn 1 tháng, chủ yếu trên xe ô tô, không nhìn màn hình. App dùng lại được cho mọi bài sau: chỉ cần nạp file MP3 (giọng AI do Sếp tự tạo) + file kịch bản `.txt`.
