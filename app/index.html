@@ -8,7 +8,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#1f6feb">
 <style>
-  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; --active: #e6efff; --repeat: #e8590c; --text-size: 32px; }
+  :root { --bg: #f7f5f0; --panel: #ffffff; --ink: #1d1b18; --muted: #6b665e; --accent: #1f6feb; --line: #ddd8cf; --active: #e6efff; --repeat: #e8590c; --repeat-slide: #7048e8; --text-size: 32px; }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #121211; --panel: #1d1c1a; --ink: #f1ede6; --muted: #a39d93; --accent: #4f8dff; --line: #34312c; --active: #1c2b45; }
   }
@@ -28,11 +28,14 @@
   details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
   summary { cursor: pointer; font-weight: 600; }
   ol { padding-left: 24px; margin: 8px 0 0; }
+  #paragraph-list h3 { font-size: 16px; margin: 14px 0 0; color: var(--accent); cursor: pointer; }
   #paragraph-list li { padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 16px; }
   #paragraph-list li.active { background: var(--active); font-weight: 600; }
   .speed { display: flex; align-items: center; gap: 10px; }
   #repeat { width: 100%; font: inherit; font-size: 20px; font-weight: 700; padding: 16px 12px; border-radius: 16px; border: 2px solid var(--line); background: var(--panel); color: var(--muted); }
-  #repeat[aria-pressed="true"] { background: var(--repeat); border-color: var(--repeat); color: #fff; }
+  #repeat[data-mode="sentence"] { background: var(--repeat); border-color: var(--repeat); color: #fff; }
+  #repeat[data-mode="slide"] { background: var(--repeat-slide); border-color: var(--repeat-slide); color: #fff; }
+  #repeat-hint { margin: -8px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
   .speed button { min-width: 48px; font-size: 22px; font-weight: 700; padding: 4px 0; }
   .speed button:disabled { opacity: .4; }
   #speed-value { min-width: 4.2em; text-align: center; font-size: 20px; }
@@ -59,20 +62,21 @@
         <button id="text-larger" class="small" aria-label="Chữ to hơn">A+</button>
       </div>
     </div>
-    <button id="repeat" aria-pressed="false">🔁 Lặp lại đoạn này: TẮT</button>
+    <button id="repeat" aria-pressed="false">🔁 Lặp lại: TẮT</button>
+    <p id="repeat-hint"></p>
     <div class="controls">
       <button id="prev">⏮ Lùi</button>
       <button id="play">▶ Phát</button>
       <button id="next">Tiến ⏭</button>
     </div>
     <details>
-      <summary>Danh sách đoạn (chạm để nhảy tới)</summary>
-      <ol id="paragraph-list"></ol>
+      <summary>Danh sách câu (chạm để nhảy tới)</summary>
+      <div id="paragraph-list"></div>
     </details>
   </section>
 
   <audio id="audio" preload="auto"></audio>
 </main>
-<script type="module" src="lesson-player.js?v=5"></script>
+<script type="module" src="lesson-player.js?v=6"></script>
 </body>
 </html>

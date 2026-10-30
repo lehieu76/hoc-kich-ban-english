@@ -13,11 +13,11 @@ if (!lessonDir) throw new Error('Thiếu thư mục bài, ví dụ: npm run buil
 const decoder = new MPEGDecoder();
 await decoder.ready;
 const { channelData, sampleRate } = decoder.decode(new Uint8Array(readFileSync(join(lessonDir, 'audio.mp3'))));
-const { title, paragraphs } = parseTimestampScript(readFileSync(join(lessonDir, 'script.txt'), 'utf8'));
+const { title, paragraphs, slides } = parseTimestampScript(readFileSync(join(lessonDir, 'script.txt'), 'utf8'));
 const snapped = snapParagraphsToPauses(paragraphs, findPauses(channelData[0], sampleRate))
-  .map((p) => ({ time: Math.round(p.time * 100) / 100, text: p.text }));
-writeFileSync(join(lessonDir, 'lesson.json'), JSON.stringify({ title, audio: 'audio.mp3', paragraphs: snapped }, null, 2));
-console.log(`${basename(lessonDir)}: ${snapped.length} đoạn, ${(channelData[0].length / sampleRate).toFixed(1)}s`);
+  .map((p) => ({ time: Math.round(p.time * 100) / 100, text: p.text, slide: p.slide }));
+writeFileSync(join(lessonDir, 'lesson.json'), JSON.stringify({ title, audio: 'audio.mp3', slides, paragraphs: snapped }, null, 2));
+console.log(`${basename(lessonDir)}: ${slides.length} slide, ${snapped.length} đoạn, ${(channelData[0].length / sampleRate).toFixed(1)}s`);
 
 const lessonsRoot = join(lessonDir, '..');
 const index = readdirSync(lessonsRoot, { withFileTypes: true })

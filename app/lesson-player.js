@@ -1,4 +1,4 @@
-// Trình phát học theo đoạn: chữ to + Phát/Dừng + Đoạn trước/sau.
+// Trình phát học theo câu: chữ to + Phát/Dừng + Câu trước/sau, lặp 1 câu hoặc lặp cả slide.
 // Điều khiển được từ màn hình khóa / tai nghe / Bluetooth xe qua Media Session.
 
 const $ = (id) => document.getElementById(id);
@@ -15,7 +15,8 @@ let lesson = null;
 let audioUrl = null;
 let currentIndex = -1;
 let speed = Number(localStorage.getItem(SPEED_KEY)) || 0.8;
-let repeating = false;
+// Chế độ lặp, bấm nút lặp để đổi vòng: tắt → lặp câu → lặp slide (chỉ khi bài có slide) → tắt.
+let repeatMode = 'off';
 
 const TEXT_SIZE_KEY = 'text-size';
 const TEXT_SIZE_STEP = 4;
@@ -49,17 +50,58 @@ async function openLesson(id) {
     audio.currentTime = Number(localStorage.getItem(positionKey(id)) || 0);
     applySpeed();
   }, { once: true });
+  lesson.slides ??= [];
+  if (!lesson.slides.length && repeatMode === 'slide') repeatMode = 'off';
   $('title').textContent = lesson.title;
-  $('paragraph-list').replaceChildren(...lesson.paragraphs.map((p, i) => {
-    const item = document.createElement('li');
-    item.textContent = p.text;
-    item.addEventListener('click', () => goTo(i));
-    return item;
-  }));
+  renderParagraphList();
   currentIndex = -1;
   updateCurrentParagraph();
   $('player').hidden = false;
 }
+
+// Danh sách câu, chia nhóm theo slide (chạm tên slide để nhảy tới câu đầu slide).
+function renderParagraphList() {
+  const makeList = (indexes) => {
+    const list = document.createElement('ol');
+    list.start = indexes[0] + 1;
+    list.append(...indexes.map((i) => {
+      const item = document.createElement('li');
+      item.textContent = lesson.paragraphs[i].text;
+      item.dataset.index = i;
+      item.addEventListener('click', () => goTo(i));
+      return item;
+    }));
+    return list;
+  };
+  const allIndexes = lesson.paragraphs.map((_, i) => i);
+  if (!lesson.slides.length) {
+    $('paragraph-list').replaceChildren(makeList(allIndexes));
+    return;
+  }
+  $('paragraph-list').replaceChildren(...lesson.slides.flatMap((slide, s) => {
+    const indexes = allIndexes.filter((i) => lesson.paragraphs[i].slide === s);
+    if (!indexes.length) return [];
+    const heading = document.createElement('h3');
+    heading.textContent = slideLabel(s);
+    heading.addEventListener('click', () => goTo(indexes[0]));
+    return [heading, makeList(indexes)];
+  }));
+}
+
+const slideLabel = (s) => `Slide ${s + 1}/${lesson.slides.length} – ${lesson.slides[s].title}`;
+
+// Khoảng câu [first, last] của slide chứa câu `index`.
+function slideRange(index) {
+  const slide = lesson.paragraphs[index].slide;
+  let first = index;
+  let last = index;
+  while (first > 0 && lesson.paragraphs[first - 1].slide === slide) first--;
+  while (last < lesson.paragraphs.length - 1 && lesson.paragraphs[last + 1].slide === slide) last++;
+  return { first, last };
+}
+
+// Khoảng câu đang lặp: 1 câu, hoặc cả slide.
+const repeatRange = (index) => (repeatMode === 'slide' ? slideRange(index) : { first: index, last: index });
 
 function indexAt(time) {
   let index = 0;
@@ -73,13 +115,15 @@ function updateCurrentParagraph() {
   if (index === currentIndex) return;
   currentIndex = index;
   const paragraph = lesson.paragraphs[index];
-  $('counter').textContent = `Đoạn ${index + 1}/${lesson.paragraphs.length}`;
+  const hasSlide = paragraph.slide !== undefined && lesson.slides[paragraph.slide];
+  $('title').textContent = hasSlide ? slideLabel(paragraph.slide) : lesson.title;
+  $('counter').textContent = `Câu ${index + 1}/${lesson.paragraphs.length}`;
   $('text').textContent = paragraph.text;
   updateRepeatButton();
-  [...$('paragraph-list').children].forEach((li, i) => li.classList.toggle('active', i === index));
+  $('paragraph-list').querySelectorAll('li').forEach((li) => li.classList.toggle('active', Number(li.dataset.index) === index));
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: `Đoạn ${index + 1}/${lesson.paragraphs.length}`,
+      title: `${hasSlide ? `Slide ${paragraph.slide + 1} – ` : ''}Câu ${index + 1}/${lesson.paragraphs.length}`,
       artist: paragraph.text,
       album: lesson.title,
     });
@@ -95,24 +139,36 @@ function goTo(index) {
   if (audio.paused) audio.play();
 }
 
-const nextParagraph = () => goTo(indexAt(audio.currentTime) + 1);
+// Đang lặp slide thì Tiến/Lùi nhảy theo slide, còn lại nhảy theo câu.
+function nextParagraph() {
+  const index = indexAt(audio.currentTime);
+  if (repeatMode !== 'slide') return goTo(index + 1);
+  const { last } = slideRange(index);
+  if (last < lesson.paragraphs.length - 1) goTo(last + 1);
+}
 
-// Như máy nghe nhạc: đang nghe dở đoạn (> 2 giây) thì phát lại từ đầu đoạn, vừa vào đoạn thì lùi về đoạn trước.
+// Như máy nghe nhạc: đang nghe dở câu/slide (> 2 giây) thì phát lại từ đầu, vừa vào thì lùi về câu/slide trước.
 function previousParagraph() {
   const index = indexAt(audio.currentTime);
-  const intoParagraph = audio.currentTime - lesson.paragraphs[index].time;
-  goTo(intoParagraph > RESTART_THRESHOLD_SECONDS ? index : index - 1);
+  const { first } = repeatRange(index);
+  const intoRange = audio.currentTime - lesson.paragraphs[first].time;
+  if (intoRange > RESTART_THRESHOLD_SECONDS || first === 0) return goTo(first);
+  goTo(repeatMode === 'slide' ? slideRange(first - 1).first : first - 1);
 }
 
 function togglePlay() {
   if (audio.paused) audio.play(); else audio.pause();
 }
 
-// Lặp đoạn: khi chạm đầu đoạn kế tiếp (hoặc hết bài) thì quay về đầu đoạn đang học.
+// Lặp: khi chạm đầu câu ngay sau khoảng đang lặp (hoặc hết bài) thì quay về đầu khoảng (câu hoặc slide).
+// Chỉ xét sát mép (≤ 1 giây) để tua xa sang chỗ khác thì lặp theo chỗ mới, không bị kéo về.
 function handleRepeat() {
-  if (!repeating || currentIndex < 0) return;
-  const next = lesson.paragraphs[currentIndex + 1];
-  if (next && audio.currentTime >= next.time - 0.05) audio.currentTime = lesson.paragraphs[currentIndex].time;
+  if (repeatMode === 'off' || currentIndex < 0) return;
+  const { first, last } = repeatRange(currentIndex);
+  const next = lesson.paragraphs[last + 1];
+  if (next && audio.currentTime >= next.time - 0.05 && audio.currentTime < next.time + 1) {
+    audio.currentTime = lesson.paragraphs[first].time;
+  }
 }
 
 // Tốc độ nói: giữ nguyên cao độ giọng, lưu lại cho tới khi người dùng chỉnh tiếp.
@@ -125,13 +181,26 @@ function applySpeed() {
   $('faster').disabled = speed >= MAX_SPEED - 0.001;
 }
 
-// Nút lặp: tắt = xám, bật = cam kèm số đoạn đang lặp.
+// Nút lặp: tắt = xám, lặp câu = cam, lặp slide = tím, kèm câu/slide đang lặp.
 function updateRepeatButton() {
   const button = $('repeat');
-  button.setAttribute('aria-pressed', String(repeating));
-  button.textContent = repeating
-    ? `🔁 ĐANG LẶP ĐOẠN ${currentIndex + 1}`
-    : '🔁 Lặp lại đoạn này: TẮT';
+  button.dataset.mode = repeatMode;
+  button.setAttribute('aria-pressed', String(repeatMode !== 'off'));
+  if (repeatMode === 'off' || currentIndex < 0) {
+    button.textContent = '🔁 Lặp lại: TẮT';
+  } else if (repeatMode === 'sentence') {
+    button.textContent = `🔁 ĐANG LẶP CÂU ${currentIndex + 1}`;
+  } else {
+    const { first, last } = slideRange(currentIndex);
+    button.textContent = `🔁 ĐANG LẶP SLIDE ${lesson.paragraphs[currentIndex].slide + 1} (câu ${first + 1}–${last + 1})`;
+  }
+  $('repeat-hint').textContent = lesson?.slides.length ? 'TẮT → LẶP CÂU → LẶP SLIDE → TẮT' : 'TẮT → LẶP CÂU → TẮT';
+}
+
+function cycleRepeatMode() {
+  const modes = lesson?.slides.length ? ['off', 'sentence', 'slide'] : ['off', 'sentence'];
+  repeatMode = modes[(modes.indexOf(repeatMode) + 1) % modes.length];
+  updateRepeatButton();
 }
 
 // Cỡ chữ đoạn đang đọc: lưu lại cho tới khi người dùng chỉnh tiếp.
@@ -181,7 +250,7 @@ audio.addEventListener('timeupdate', () => {
   }
 });
 audio.addEventListener('ended', () => {
-  if (repeating && currentIndex >= 0) goTo(currentIndex);
+  if (repeatMode !== 'off' && currentIndex >= 0) goTo(repeatRange(currentIndex).first);
 });
 audio.addEventListener('play', () => { $('play').textContent = '⏸ Dừng'; });
 audio.addEventListener('pause', () => { $('play').textContent = '▶ Phát'; });
@@ -193,7 +262,7 @@ $('slower').addEventListener('click', () => changeSpeed(-SPEED_STEP));
 $('faster').addEventListener('click', () => changeSpeed(SPEED_STEP));
 $('text-smaller').addEventListener('click', () => changeTextSize(-TEXT_SIZE_STEP));
 $('text-larger').addEventListener('click', () => changeTextSize(TEXT_SIZE_STEP));
-$('repeat').addEventListener('click', () => { repeating = !repeating; updateRepeatButton(); });
+$('repeat').addEventListener('click', cycleRepeatMode);
 $('lesson-select').addEventListener('change', (event) => { audio.pause(); openLesson(event.target.value); });
 
 applySpeed();
