@@ -58,6 +58,38 @@ async function openLesson(id) {
   currentIndex = -1;
   updateCurrentParagraph();
   $('player').hidden = false;
+  fixTextHeights();
+}
+
+// Chiều cao lớn nhất khi lần lượt đặt từng nội dung vào 1 bản sao ẩn của `element` (cùng kiểu chữ, cùng bề ngang).
+function measureMaxHeight(element, texts, width) {
+  const probe = document.createElement(element.tagName);
+  const style = getComputedStyle(element);
+  for (const prop of ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight', 'letterSpacing', 'wordSpacing', 'overflowWrap', 'wordBreak', 'padding', 'boxSizing']) {
+    probe.style[prop] = style[prop];
+  }
+  Object.assign(probe.style, { position: 'absolute', visibility: 'hidden', width: `${width}px`, margin: '0' });
+  element.after(probe);
+  const max = Math.max(...texts.map((text) => { probe.textContent = text; return probe.offsetHeight; }));
+  probe.remove();
+  return max;
+}
+
+// Giữ khung chữ và dòng tên slide cao bằng câu/tên dài nhất của bài (theo cỡ chữ + bề ngang màn hình hiện tại)
+// để các nút bên dưới đứng yên, không nhảy lên xuống khi đổi câu. Đổi bài, cỡ chữ hay xoay màn hình thì đo lại.
+function fixTextHeights() {
+  if (!lesson || $('player').hidden) return;
+  const text = $('text');
+  const title = $('title');
+  const counter = $('counter');
+  const total = lesson.paragraphs.length;
+  text.style.minHeight = `${measureMaxHeight(text, lesson.paragraphs.map((p) => p.text), text.clientWidth)}px`;
+  const shownCounter = counter.textContent;
+  counter.textContent = `Câu ${total}/${total}`;
+  const titleWidth = title.parentElement.clientWidth - counter.offsetWidth - 8;
+  counter.textContent = shownCounter;
+  const titles = lesson.slides.length ? lesson.slides.map((_, s) => slideLabel(s)) : [lesson.title];
+  title.style.minHeight = `${measureMaxHeight(title, titles, titleWidth)}px`;
 }
 
 // Danh sách câu, chia nhóm theo slide (chạm tên slide để nhảy tới câu đầu slide).
@@ -257,6 +289,7 @@ function applyTextSize() {
   document.documentElement.style.setProperty('--text-size', `${textSize}px`);
   $('text-smaller').disabled = textSize <= MIN_TEXT_SIZE;
   $('text-larger').disabled = textSize >= MAX_TEXT_SIZE;
+  fixTextHeights();
 }
 
 function changeTextSize(delta) {
@@ -318,6 +351,7 @@ $('lesson-select').addEventListener('change', (event) => { audio.pause(); openLe
 applySpeed();
 applyTextSize();
 setupMediaSession();
+window.addEventListener('resize', fixTextHeights);
 loadLessonList().catch((error) => { $('text').textContent = `Không tải được bài: ${error.message}`; $('player').hidden = false; });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => {});
