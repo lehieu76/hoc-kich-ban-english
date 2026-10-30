@@ -24,22 +24,23 @@
   .controls button { font: inherit; font-size: 18px; font-weight: 700; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
   .controls #prev, .controls #next { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
   .controls #play { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .options { display: flex; gap: 6px 20px; flex-wrap: wrap; align-items: center; font-size: 19px; }
+  .options { display: flex; gap: 16px; flex-wrap: nowrap; align-items: center; font-size: 19px; white-space: nowrap; }
   select, button.small { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
   details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
   summary { cursor: pointer; font-weight: 600; }
-  ol { padding-left: 24px; margin: 8px 0 0; }
+  ol { padding-left: 34px; margin: 8px 0 0; }
+  #paragraph-list { position: relative; max-height: 50vh; overflow-y: auto; overscroll-behavior: contain; }
   #paragraph-list h3 { font-size: 16px; margin: 14px 0 0; color: var(--accent); cursor: pointer; }
   #paragraph-list li { padding: 6px 4px; border-radius: 8px; cursor: pointer; font-size: 16px; }
   #paragraph-list li.active { background: var(--active); font-weight: 600; }
-  .speed { display: flex; align-items: center; gap: 10px; }
+  .speed { display: flex; align-items: center; gap: 6px; }
   #repeat { width: 100%; font: inherit; font-size: 18px; font-weight: 700; padding: 5px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); color: var(--muted); }
   #repeat[data-mode="sentence"] { background: var(--repeat); border-color: var(--repeat); color: #fff; }
   #repeat[data-mode="slide"] { background: var(--repeat-slide); border-color: var(--repeat-slide); color: #fff; }
   #repeat-hint { margin: -6px 0 0; text-align: center; font-size: 14px; color: var(--muted); }
-  .speed button { min-width: 44px; font-size: 20px; font-weight: 700; padding: 0; line-height: 1.5; }
+  .speed button { min-width: 40px; font-size: 20px; font-weight: 700; padding: 0; line-height: 1.5; }
   .speed button:disabled { opacity: .4; }
-  #speed-value { min-width: 4.2em; text-align: center; font-size: 20px; }
+  #speed-value { min-width: 3.2em; text-align: center; font-size: 19px; }
   #player:not([hidden]) { display: contents; }
 </style>
 </head>
@@ -58,7 +59,7 @@
         <b id="speed-value">0,80×</b>
         <button id="faster" class="small" aria-label="Nhanh hơn">+</button>
       </div>
-      <div class="speed">Cỡ chữ
+      <div class="speed">
         <button id="text-smaller" class="small" aria-label="Chữ nhỏ hơn">A−</button>
         <button id="text-larger" class="small" aria-label="Chữ to hơn">A+</button>
       </div>
@@ -78,6 +79,6 @@
 
   <audio id="audio" preload="auto"></audio>
 </main>
-<script type="module" src="lesson-player.js?v=8"></script>
+<script type="module" src="lesson-player.js?v=9"></script>
 </body>
 </html>

@@ -122,6 +122,7 @@ function updateCurrentParagraph() {
   $('text').textContent = paragraph.text;
   updateRepeatButton();
   $('paragraph-list').querySelectorAll('li').forEach((li) => li.classList.toggle('active', Number(li.dataset.index) === index));
+  scrollListToActive();
   if ('mediaSession' in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: `${hasSlide ? `Slide ${paragraph.slide + 1} – ` : ''}Câu ${index + 1}/${lesson.paragraphs.length}`,
@@ -129,6 +130,14 @@ function updateCurrentParagraph() {
       album: lesson.title,
     });
   }
+}
+
+// Khung danh sách câu tự cuộn (chỉ trong khung, không cuộn cả trang) để câu đang đọc nằm giữa khung.
+function scrollListToActive(behavior = 'smooth') {
+  const list = $('paragraph-list');
+  const item = list.querySelector('li.active');
+  if (!item || !list.closest('details').open) return;
+  list.scrollTo({ top: item.offsetTop - (list.clientHeight - item.offsetHeight) / 2, behavior });
 }
 
 // ---------- Điều hướng ----------
@@ -303,6 +312,7 @@ $('faster').addEventListener('click', () => changeSpeed(SPEED_STEP));
 $('text-smaller').addEventListener('click', () => changeTextSize(-TEXT_SIZE_STEP));
 $('text-larger').addEventListener('click', () => changeTextSize(TEXT_SIZE_STEP));
 $('repeat').addEventListener('click', cycleRepeatMode);
+$('paragraph-list').closest('details').addEventListener('toggle', () => scrollListToActive('instant'));
 $('lesson-select').addEventListener('change', (event) => { audio.pause(); openLesson(event.target.value); });
 
 applySpeed();
