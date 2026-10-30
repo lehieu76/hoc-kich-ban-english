@@ -22,6 +22,7 @@
   #text { flex: 1; font-size: var(--text-size); line-height: 1.45; font-weight: 600; margin: 0; overflow-wrap: break-word; }
   .controls { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 10px; position: sticky; bottom: 0; background: var(--bg); padding: 8px 0; }
   .controls button { font: inherit; font-size: 20px; font-weight: 700; padding: 22px 4px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .controls #prev, .controls #next { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
   .controls #play { background: var(--accent); border-color: var(--accent); color: #fff; }
   .options { display: flex; gap: 12px 20px; flex-wrap: wrap; align-items: center; font-size: 19px; }
   select, button.small { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
@@ -77,6 +78,6 @@
 
   <audio id="audio" preload="auto"></audio>
 </main>
-<script type="module" src="lesson-player.js?v=6"></script>
+<script type="module" src="lesson-player.js?v=7"></script>
 </body>
 </html>

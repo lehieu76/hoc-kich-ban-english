@@ -7,6 +7,7 @@ const LESSON_KEY = 'lesson-id';
 const SPEED_KEY = 'lesson-speed';
 const positionKey = (id) => `lesson-position:${id}`;
 const RESTART_THRESHOLD_SECONDS = 2;
+const LONG_PRESS_MS = 600;
 const SPEED_STEP = 0.05;
 const MIN_SPEED = 0.5;
 const MAX_SPEED = 1.5;
@@ -139,21 +140,59 @@ function goTo(index) {
   if (audio.paused) audio.play();
 }
 
-// Đang lặp slide thì Tiến/Lùi nhảy theo slide, còn lại nhảy theo câu.
-function nextParagraph() {
+// Như máy nghe nhạc: đang nghe dở (> 2 giây) thì phát lại từ đầu câu/slide, vừa vào thì lùi về câu/slide trước.
+const isJustStarted = (index) => audio.currentTime - lesson.paragraphs[index].time <= RESTART_THRESHOLD_SECONDS;
+
+// Câu sau/trước. Đang lặp slide thì chỉ đi vòng trong slide đó (câu cuối → câu đầu và ngược lại).
+function nextSentence() {
   const index = indexAt(audio.currentTime);
   if (repeatMode !== 'slide') return goTo(index + 1);
-  const { last } = slideRange(index);
+  const { first, last } = slideRange(index);
+  goTo(index < last ? index + 1 : first);
+}
+
+function previousSentence() {
+  const index = indexAt(audio.currentTime);
+  if (!isJustStarted(index)) return goTo(index);
+  if (repeatMode !== 'slide') return goTo(index - 1);
+  const { first, last } = slideRange(index);
+  goTo(index > first ? index - 1 : last);
+}
+
+// Slide sau/trước (đứng ở slide cuối/đầu thì giữ nguyên slide).
+function nextSlide() {
+  const { last } = slideRange(indexAt(audio.currentTime));
   if (last < lesson.paragraphs.length - 1) goTo(last + 1);
 }
 
-// Như máy nghe nhạc: đang nghe dở câu/slide (> 2 giây) thì phát lại từ đầu, vừa vào thì lùi về câu/slide trước.
-function previousParagraph() {
-  const index = indexAt(audio.currentTime);
-  const { first } = repeatRange(index);
-  const intoRange = audio.currentTime - lesson.paragraphs[first].time;
-  if (intoRange > RESTART_THRESHOLD_SECONDS || first === 0) return goTo(first);
-  goTo(repeatMode === 'slide' ? slideRange(first - 1).first : first - 1);
+function previousSlide() {
+  const { first } = slideRange(indexAt(audio.currentTime));
+  if (!isJustStarted(first) || first === 0) return goTo(first);
+  goTo(slideRange(first - 1).first);
+}
+
+// Màn hình khóa / tai nghe chỉ có 1 cặp nút: đang lặp slide thì nhảy slide, còn lại nhảy câu.
+const nextTrack = () => (repeatMode === 'slide' ? nextSlide() : nextSentence());
+const previousTrack = () => (repeatMode === 'slide' ? previousSlide() : previousSentence());
+
+// Nút Lùi/Tiến: bấm = câu; đang lặp slide thì giữ lâu = slide (rung nhẹ báo đã nhảy slide).
+function bindNavButton(button, onPress, onLongPress) {
+  let timer = null;
+  let longPressed = false;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  button.addEventListener('pointerdown', () => {
+    longPressed = false;
+    if (repeatMode !== 'slide') return;
+    timer = setTimeout(() => {
+      longPressed = true;
+      timer = null;
+      navigator.vibrate?.(40);
+      onLongPress();
+    }, LONG_PRESS_MS);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((type) => button.addEventListener(type, cancel));
+  button.addEventListener('contextmenu', (event) => event.preventDefault());
+  button.addEventListener('click', () => { if (!longPressed) onPress(); });
 }
 
 function togglePlay() {
@@ -194,7 +233,8 @@ function updateRepeatButton() {
     const { first, last } = slideRange(currentIndex);
     button.textContent = `🔁 ĐANG LẶP SLIDE ${lesson.paragraphs[currentIndex].slide + 1} (câu ${first + 1}–${last + 1})`;
   }
-  $('repeat-hint').textContent = lesson?.slides.length ? 'TẮT → LẶP CÂU → LẶP SLIDE → TẮT' : 'TẮT → LẶP CÂU → TẮT';
+  if (repeatMode === 'slide') $('repeat-hint').textContent = 'Lùi/Tiến: bấm = câu · giữ lâu = slide';
+  else $('repeat-hint').textContent = lesson?.slides.length ? 'TẮT → LẶP CÂU → LẶP SLIDE → TẮT' : 'TẮT → LẶP CÂU → TẮT';
 }
 
 function cycleRepeatMode() {
@@ -229,8 +269,8 @@ function setupMediaSession() {
   const handlers = {
     play: () => audio.play(),
     pause: () => audio.pause(),
-    nexttrack: nextParagraph,
-    previoustrack: previousParagraph,
+    nexttrack: nextTrack,
+    previoustrack: previousTrack,
     seekto: (details) => { audio.currentTime = details.seekTime; },
   };
   for (const [action, handler] of Object.entries(handlers)) {
@@ -256,8 +296,8 @@ audio.addEventListener('play', () => { $('play').textContent = '⏸ Dừng'; });
 audio.addEventListener('pause', () => { $('play').textContent = '▶ Phát'; });
 
 $('play').addEventListener('click', togglePlay);
-$('prev').addEventListener('click', previousParagraph);
-$('next').addEventListener('click', nextParagraph);
+bindNavButton($('prev'), previousSentence, previousSlide);
+bindNavButton($('next'), nextSentence, nextSlide);
 $('slower').addEventListener('click', () => changeSpeed(-SPEED_STEP));
 $('faster').addEventListener('click', () => changeSpeed(SPEED_STEP));
 $('text-smaller').addEventListener('click', () => changeTextSize(-TEXT_SIZE_STEP));
