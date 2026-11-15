@@ -4,6 +4,7 @@
 const $ = (id) => document.getElementById(id);
 const audio = $('audio');
 const LESSON_KEY = 'lesson-id';
+const NEWEST_LESSON_KEY = 'newest-lesson-id';
 const SPEED_KEY = 'lesson-speed';
 const positionKey = (id) => `lesson-position:${id}`;
 const RESTART_THRESHOLD_SECONDS = 2;
@@ -32,8 +33,12 @@ async function loadLessonList() {
   const select = $('lesson-select');
   select.replaceChildren(...lessons.map((l) => new Option(l.title, l.id)));
   select.hidden = lessons.length < 2;
+  // Bài đầu danh sách là bài mới nhất: lần đầu thấy bài mới thì mở nó, sau đó nhớ bài đang học như cũ.
+  const newestId = lessons[0].id;
+  const isNewLesson = localStorage.getItem(NEWEST_LESSON_KEY) !== newestId;
+  localStorage.setItem(NEWEST_LESSON_KEY, newestId);
   const savedId = localStorage.getItem(LESSON_KEY);
-  select.value = lessons.some((l) => l.id === savedId) ? savedId : lessons[0].id;
+  select.value = !isNewLesson && lessons.some((l) => l.id === savedId) ? savedId : newestId;
   await openLesson(select.value);
 }
 

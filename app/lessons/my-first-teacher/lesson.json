@@ -61,7 +61,12 @@
     },
     {
       "time": 91.11,
-      "text": "I also love our trip to the water park in Nha Trang. We went on water slides, played with water guns and enjoyed the bubble pool. And guess what? We even got stuck in the emergency stairwell at our hotel! What a funny adventure! My dad is always ready to explore new things and discover the world with me!",
+      "text": "I also love our trip to the water park in Nha Trang. We went on water slides, played with water guns and enjoyed the bubble pool.",
+      "slide": 2
+    },
+    {
+      "time": 101.31,
+      "text": "And guess what? We even got stuck in the emergency stairwell at our hotel! What a funny adventure! My dad is always ready to explore new things and discover the world with me!",
       "slide": 2
     },
     {
